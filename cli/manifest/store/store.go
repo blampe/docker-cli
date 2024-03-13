@@ -170,8 +170,8 @@ func (n *notFoundError) NotFound() {}
 
 // IsNotFound returns true if the error is a not found error
 func IsNotFound(err error) bool {
-	_, ok := err.(notFound)
-	return ok
+	var nf notFound
+	return errors.As(err, &nf)
 }
 
 type notFound interface {

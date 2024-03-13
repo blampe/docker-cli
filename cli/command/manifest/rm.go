@@ -2,11 +2,10 @@ package manifest
 
 import (
 	"context"
-	"strings"
+	"errors"
 
 	"github.com/docker/cli/cli"
 	"github.com/docker/cli/cli/command"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -24,25 +23,22 @@ func newRmManifestListCommand(dockerCli command.Cli) *cobra.Command {
 }
 
 func runRm(_ context.Context, dockerCli command.Cli, targets []string) error {
-	var errs []string
+	var errs error
 	for _, target := range targets {
 		targetRef, refErr := normalizeReference(target)
 		if refErr != nil {
-			errs = append(errs, refErr.Error())
+			errs = errors.Join(errs, refErr)
 			continue
 		}
 		_, searchErr := dockerCli.ManifestStore().GetList(targetRef)
 		if searchErr != nil {
-			errs = append(errs, searchErr.Error())
+			errs = errors.Join(errs, searchErr)
 			continue
 		}
 		rmErr := dockerCli.ManifestStore().Remove(targetRef)
 		if rmErr != nil {
-			errs = append(errs, rmErr.Error())
+			errs = errors.Join(errs, rmErr)
 		}
 	}
-	if len(errs) > 0 {
-		return errors.New(strings.Join(errs, "\n"))
-	}
-	return nil
+	return errs
 }
